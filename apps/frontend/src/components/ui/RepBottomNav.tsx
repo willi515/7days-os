@@ -8,8 +8,8 @@ import { MapPin, Users, ShoppingBag, RotateCcw, TrendingUp } from 'lucide-react'
 export const RepBottomNav: React.FC = () => {
   const pathname = usePathname();
 
-  // لا تظهر في شاشة تسجيل الدخول
-  if (pathname === '/rep/login') {
+  // تظهر فقط في شاشات المندوب الميداني باستثناء تسجيل الدخول
+  if (!pathname.startsWith('/rep') || pathname === '/rep/login') {
     return null;
   }
 
