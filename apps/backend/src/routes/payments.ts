@@ -28,21 +28,19 @@ router.post('/collect', async (req: Request, res: Response): Promise<void> => {
     const paymentRows = await queryWithTenant(
       tenantId,
       `INSERT INTO payments (
-        tenant_id, customer_id, order_id, collected_by_user_id,
-        receipt_number, amount, payment_method, reference_number,
-        proof_image_url, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        tenant_id, customer_id, collected_by_user_id,
+        receipt_number, amount, payment_method, transaction_reference,
+        notes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *`,
       [
         tenantId,
         payload.customer_id,
-        payload.order_id || null,
         repId,
         receiptNumber,
         payload.amount,
         payload.payment_method,
         payload.reference_number || null,
-        payload.proof_image_url || null,
         payload.notes || null,
       ]
     );
@@ -62,12 +60,12 @@ router.post('/collect', async (req: Request, res: Response): Promise<void> => {
     const updatedCustomer = updatedCustomerRows[0];
 
     // 3. إطلاق إشعار واتساب تلقائي بإيصال السداد
-    if (updatedCustomer?.phone_number) {
+    if (updatedCustomer?.phone_primary) {
       await sendWhatsAppNotification({
-        toPhone: updatedCustomer.phone_number,
+        toPhone: updatedCustomer.phone_primary,
         templateType: 'payment_receipt',
         params: {
-          salonName: updatedCustomer.business_name,
+          salonName: updatedCustomer.name,
           amount: payload.amount,
           repName: req.user?.full_name || 'أحمد فتحي',
           remainingBalance: updatedCustomer.current_balance,

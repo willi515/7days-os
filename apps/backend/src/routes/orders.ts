@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { ApiResponse, CreateOrderPayload, OrderStatus } from '@7days/shared-types';
+import { ApiResponse, CreateOrderPayload } from '@7days/shared-types';
 import { queryWithTenant } from '../db';
 import { allocateFEFOBatches } from '../services/fefo';
 
@@ -50,11 +50,22 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
 
     // 2. تسجيل الطلب في قاعدة البيانات
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+    
+    // تحويل طريقة الدفع لتتوافق مع قيود الجدول
+    let paymentMethodAgreed = 'cash_on_delivery';
+    if (payload.payment_method === 'credit_terms') {
+      paymentMethodAgreed = 'credit_terms';
+    } else if (payload.payment_method === 'vodafone_cash' || payload.payment_method === 'instapay') {
+      paymentMethodAgreed = 'e_wallet';
+    }
+
+    const orderSource = payload.order_type === 'b2c_consumer' ? 'b2c_store' : 'rep_app';
+
     const orders = await queryWithTenant(
       tenantId,
       `INSERT INTO orders (
-        tenant_id, customer_id, rep_id, order_number, order_type,
-        status, subtotal_amount, net_amount, payment_method, notes
+        tenant_id, customer_id, sales_rep_id, order_number, order_source,
+        order_status, subtotal_amount, discount_amount, total_amount, payment_method_agreed
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
       [
@@ -62,12 +73,12 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
         payload.customer_id,
         repId,
         orderNumber,
-        payload.order_type || 'b2b_salon',
-        'new' as OrderStatus,
+        orderSource,
+        'new',
         subtotal,
+        0,
         subtotal,
-        payload.payment_method,
-        payload.notes || null,
+        paymentMethodAgreed,
       ]
     );
 
@@ -79,7 +90,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
         await queryWithTenant(
           tenantId,
           `INSERT INTO order_items (
-            tenant_id, order_id, product_id, batch_id, quantity, unit_price, total_price
+            tenant_id, order_id, product_id, batch_id, quantity, unit_price, total_line_amount
           ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
             tenantId,

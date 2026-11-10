@@ -18,7 +18,7 @@ router.post('/pick-lists/complete', async (req: Request, res: Response): Promise
 
     const updated = await queryWithTenant(
       tenantId,
-      `UPDATE orders SET status = 'ready', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *`,
+      `UPDATE orders SET order_status = 'ready', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *`,
       [order_id, tenantId]
     );
 
@@ -48,10 +48,13 @@ router.post('/deliveries/confirm-handover', async (req: Request, res: Response):
     const orderRows = await queryWithTenant(
       tenantId,
       `UPDATE orders 
-       SET status = 'delivered', updated_at = NOW() 
-       WHERE id = $1 AND tenant_id = $2 
+       SET order_status = 'delivered', 
+           customer_signature_data = $1,
+           delivered_at = NOW(),
+           updated_at = NOW() 
+       WHERE id = $2 AND tenant_id = $3 
        RETURNING *`,
-      [order_id, tenantId]
+      [signature_url || 'SIGNED_DIGITALLY', order_id, tenantId]
     );
 
     const order = orderRows[0];
@@ -75,19 +78,28 @@ router.post('/deliveries/confirm-handover', async (req: Request, res: Response):
       }
     }
 
-    // 3. إشعار واتساب تلقائي للصالون بتسليم الطلب ورابط الفاتورة
+    // 3. زيادة مديونية الصالون إذا كان الدفع آجل أو عند الاستلام
+    await queryWithTenant(
+      tenantId,
+      `UPDATE customers
+       SET current_balance = current_balance + $1
+       WHERE id = $2 AND tenant_id = $3`,
+      [order.total_amount, order.customer_id, tenantId]
+    );
+
+    // 4. إشعار واتساب تلقائي للصالون بتسليم الطلب ورابط الفاتورة
     const customer = (await queryWithTenant(
       tenantId,
       `SELECT * FROM customers WHERE id = $1 AND tenant_id = $2`,
       [order.customer_id, tenantId]
     ))[0];
 
-    if (customer?.phone_number) {
+    if (customer?.phone_primary) {
       await sendWhatsAppNotification({
-        toPhone: customer.phone_number,
+        toPhone: customer.phone_primary,
         templateType: 'order_delivered',
         params: {
-          salonName: customer.business_name,
+          salonName: customer.name,
           orderNumber: order.order_number,
           orderId: order.id,
         },
