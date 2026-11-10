@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { RepBottomNav } from '@/components/ui/RepBottomNav';
+import { PWARegister } from '@/components/PWARegister';
 
 export const metadata: Metadata = {
   title: '7Days OS | نظام مبيعات وتوزيع مستحضرات التجميل',
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className="min-h-screen bg-slate-100 font-cairo antialiased selection:bg-brand-gold selection:text-brand-primary">
+        <PWARegister />
         <div className="min-h-screen relative">
           {children}
           <RepBottomNav />
