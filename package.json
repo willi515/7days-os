@@ -1,0 +1,21 @@
+{
+  "name": "7days-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "7Days OS Sales & Marketing - Cloud Multi-Tenant SaaS Platform for Cosmetics and Salon Distribution",
+  "author": "Mahmoud William",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace=apps/backend run dev",
+    "dev:frontend": "npm --workspace=apps/frontend run dev",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
