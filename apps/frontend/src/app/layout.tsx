@@ -26,11 +26,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className="min-h-screen bg-slate-50 font-cairo antialiased selection:bg-brand-gold selection:text-brand-primary">
-        <main className="mx-auto max-w-md min-h-screen bg-white shadow-xl relative pb-20">
+      <body className="min-h-screen bg-slate-100 font-cairo antialiased selection:bg-brand-gold selection:text-brand-primary">
+        <div className="min-h-screen relative">
           {children}
           <RepBottomNav />
-        </main>
+        </div>
       </body>
     </html>
   );
