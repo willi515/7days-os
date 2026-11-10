@@ -1,0 +1,35 @@
+# System & OS Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies & Build Artefacts
+node_modules/
+dist/
+build/
+.next/
+out/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Database & Docker Local Volumes
+pgdata/
+docker-data/
+*.sql.gz
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
