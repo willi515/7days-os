@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, use, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 
 const mockOrders: Record<string, {
   id: string;
@@ -71,9 +71,10 @@ const mockOrders: Record<string, {
 
 type Step = 'detail' | 'confirm' | 'done';
 
-export default function DeliveryDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function DeliveryDetailPage() {
   const router = useRouter();
+  const routeParams = useParams();
+  const id = (routeParams?.id as string) || '';
   const order = mockOrders[id];
 
   const [step, setStep] = useState<Step>('detail');
